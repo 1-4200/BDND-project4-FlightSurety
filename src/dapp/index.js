@@ -14,15 +14,6 @@ import './flightsurety.css';
     await contract.initialize();
 
 
-    // contract.web3.eth.subscribe('newBlockHeaders', function (error, blockHeader) {
-    //     if (error) console.log(error);
-    //     console.log(blockHeader);
-    // }).on('data', function (blockHeader) {
-    //         // alternatively we can log it here
-    // console.log(blockHeader);
-    // });
-
-    // Read transaction
     {
         let operational = false;
         let error = null;
@@ -159,7 +150,7 @@ import './flightsurety.css';
 function display(title, description, results) {
     let displayDiv = DOM.elid("display-wrapper");
     let section = DOM.section();
-    section.appendChild(DOM.h2(title));
+    section.appendChild(DOM.h3(title));
     section.appendChild(DOM.h5(description));
     results.map((result) => {
         let row = section.appendChild(DOM.div({className: 'row'}));
@@ -170,10 +161,3 @@ function display(title, description, results) {
     displayDiv.append(section);
 
 }
-
-
-
-
-
-
-
