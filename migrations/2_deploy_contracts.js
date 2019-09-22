@@ -12,7 +12,7 @@ module.exports = function(deployer) {
                         FlightSuretyData.deployed(),
                         FlightSuretyApp.deployed()
                     ]);
-                    // // App Contract needs to be added to map of authorized ones in Data Contract
+                    // App Contract needs to be added to map of authorized ones in Data Contract
                     let result = await instances[0].authorizeCaller(FlightSuretyApp.address);
 
                     let config = {
