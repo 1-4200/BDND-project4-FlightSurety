@@ -9,14 +9,10 @@ Udacity Blockchain Developer Nanodegree project4 (Flight Surety)
 - Oracles provide flight status information
 
 ## How to set up
-`npm install`
-`ganache-cli -a 100 -l 9999999`
-
+Download node_modules by `npm install`
+Launch ganache by `ganache-cli -a 100 -l 9999999`
 Rewrite mnemonic in `truffle.js` according to the ganache-cli's mnemonic
-
-truffle compile
-truffle test
-truffle migrate
+Truffle migration by `truffle migrate`
 
 ### Develop Client
 To run truffle tests:
