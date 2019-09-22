@@ -46,10 +46,10 @@ To build dapp for prod:
 Deploy the contents of the ./dapp folder
 
 ## Versions
-Truffle v5.0.36 (core: 5.0.36)
-Solidity v0.5.8 (solc-js)
-Node v10.15.3
-Web3.js v1.2.1
+- Truffle v5.0.36 (core: 5.0.36)
+- Solidity v0.5.8 (solc-js)
+- Node v10.15.3
+- Web3.js v1.2.1
 
 
 ## Requirements
