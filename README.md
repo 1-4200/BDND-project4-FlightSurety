@@ -9,37 +9,21 @@ Udacity Blockchain Developer Nanodegree project4 (Flight Surety)
 - Oracles provide flight status information
 
 ## How to set up
-Download node_modules by `npm install`
-Launch ganache by `ganache-cli -a 100 -l 9999999`
-Rewrite mnemonic in `truffle.js` according to the ganache-cli's mnemonic
-Truffle migration by `truffle migrate`
+1. Download node_modules by `npm install`
+2. Launch ganache by `ganache-cli -a 100 -l 9999999`
+3. Rewrite mnemonic in `truffle.js` according to the ganache-cli's mnemonic
+4. Truffle migration by `truffle migrate`
 
-### Develop Client
-To run truffle tests:
+### To run truffle tests:
+Test each files separately as follows
+- `truffle test ./test/flightSurety.js`
+- `truffle test ./test/oracles.js`
 
-`truffle test ./test/flightSurety.js`
-
-`truffle test ./test/oracles.js`
-
-To use the dapp:
-
-`truffle migrate`
-
+### To use the dapp:
 `npm run dapp`
 
-To view dapp:
-
+### To view dapp:
 http://localhost:8000
-
-### Develop Server
-`npm run server`
-`truffle test ./test/oracles.js`
-
-### Deploy
-To build dapp for prod: 
-`npm run dapp:prod`
-
-Deploy the contents of the ./dapp folder
 
 ## Versions
 - Truffle v5.0.36 (core: 5.0.36)
