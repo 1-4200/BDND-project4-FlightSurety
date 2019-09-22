@@ -1,8 +1,3 @@
-# FlightSurety
-
-FlightSurety is a sample application project for Udacity's Blockchain course.
-
-
 # BDND-project4-FlightSurety
 Udacity Blockchain Developer Nanodegree project4 (Flight Surety)
 
