@@ -14,6 +14,9 @@ Udacity Blockchain Developer Nanodegree project4 (Flight Surety)
 ### Classes
 ![Activity](images/FlightSurety-Classes.png)
 
+### UI image
+![Activity](images/FlightSurety-UI.png)
+
 ## Prerequisits
 1. Download node_modules by `npm install`
 2. Set Ganache workspace https://www.trufflesuite.com/docs/ganache/reference/ganache-settings
