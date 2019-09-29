@@ -8,6 +8,12 @@ Udacity Blockchain Developer Nanodegree project4 (Flight Surety)
 - If flight is delayed due to airline fault, passengers are paid 1.5X the amount they paid for the insurance
 - Oracles provide flight status information
 
+### Activity
+![Activity](images/FlightSurety-Activity.png)
+
+### Classes
+![Activity](images/FlightSurety-Classes.png)
+
 ## Prerequisits
 1. Download node_modules by `npm install`
 2. Set Ganache workspace https://www.trufflesuite.com/docs/ganache/reference/ganache-settings
