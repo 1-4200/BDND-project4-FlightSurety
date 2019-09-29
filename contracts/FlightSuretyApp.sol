@@ -21,10 +21,33 @@ contract FlightSuretyApp {
     uint8 private constant STATUS_CODE_LATE_TECHNICAL = 40;
     uint8 private constant STATUS_CODE_LATE_OTHER = 50;
 
-
     address private contractOwner;          // Account used to deploy contract
-    mapping(address => bool) multiCalls;   // Mapping for storing multi-call addresses
+    mapping(address => bool) multiCalls;    // Mapping for storing multi-call addresses
     address[] multiCallKeys = new address[](0);
+
+    /********************************************************************************************/
+    /*                            DATA VARIABLES FOR ORACLE                                     */
+    /********************************************************************************************/
+
+    uint8 private nonce = 0;                                    // Incremented to add pseudo-randomness at various points
+    uint256 public constant REGISTRATION_FEE = 1 ether;         // Fee to be paid when registering oracle
+    uint256 public constant MIN_RESPONSES = 3;                  // Number of oracles that must respond for valid status
+
+    struct Oracle {
+        bool isRegistered;
+        uint8[3] indexes;
+    }
+
+    // Responses from oracles. This lets us group responses and identify the response that majority of the oracles
+    struct ResponseInfo {
+        address requester;                              // Account that requested status
+        bool isOpen;                                    // If open, oracle responses are accepted
+        mapping(uint8 => address[]) responses;          // Mapping key is the status code reported .
+    }
+
+    mapping(address => Oracle) private oracles;                 // Track all registered oracles
+    mapping(bytes32 => ResponseInfo) private oracleResponses;   // Track all oracle responses: Key = hash(index, flight, timestamp)
+
 
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -35,15 +58,13 @@ contract FlightSuretyApp {
 
     /**
     * @dev Modifier that requires the "operational" boolean variable to be "true"
-    *      This is used on all state changing functions to pause the contract in 
+    *      This is used on all state changing functions to pause the contract in
     *      the event there is an issue that needs to be fixed
     */
     modifier requireIsOperational(){
-        // Modify to call data contract's status
-        bool dataOperational = flightSuretyData.isOperational();
+        bool dataOperational = flightSuretyData.isOperational();        // Modify to call data contract's status
         require(dataOperational, "Contract is currently not operational");
         _;
-        // All modifiers require an "_" which indicates where the function body will be added
     }
 
     /**
@@ -68,8 +89,15 @@ contract FlightSuretyApp {
     }
 
     /********************************************************************************************/
-    /*                                       CONSTRUCTOR                                        */
+    /*                     EVENT DEFINITIONS & CONSTRUCTOR                                      */
     /********************************************************************************************/
+    // Event fired each time an oracle submits a response
+    event FlightStatusInfo(address airline, string flight, uint256 timestamp, uint8 status);
+    event OracleReport(address airline, string flight, uint256 timestamp, uint8 status);
+
+    // Event fired when flight status request is submitted
+    // Oracles track this and if they have a matching index they fetch data and submit a response
+    event OracleRequest(uint8 index, address airline, string flight, uint256 timestamp);
 
     /**
     * @dev Contract constructor
@@ -85,14 +113,12 @@ contract FlightSuretyApp {
     /********************************************************************************************/
 
     function isOperational() public view returns (bool){
-        return flightSuretyData.isOperational();
-        // Modify to call data contract's status
+        return flightSuretyData.isOperational();            // Modify to call data contract's status
     }
 
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
-
 
     /**
      * @dev Add an airline to the registration queue
@@ -149,7 +175,7 @@ contract FlightSuretyApp {
 
 
     // Generate a request for oracles to fetch flight information
-    function fetchFlightStatus(address airline, string calldata flight, uint256 timestamp) external{
+    function fetchFlightStatus(address airline, string calldata flight, uint256 timestamp) external {
         uint8 index = getRandomIndex(msg.sender);
 
         // Generate a unique key for storing the request
@@ -158,50 +184,6 @@ contract FlightSuretyApp {
 
         emit OracleRequest(index, airline, flight, timestamp);
     }
-
-
-    // region ORACLE MANAGEMENT
-
-    // Incremented to add pseudo-randomness at various points
-    uint8 private nonce = 0;
-
-    // Fee to be paid when registering oracle
-    uint256 public constant REGISTRATION_FEE = 1 ether;
-
-    // Number of oracles that must respond for valid status
-    uint256 public constant MIN_RESPONSES = 3;
-
-
-    struct Oracle {
-        bool isRegistered;
-        uint8[3] indexes;
-    }
-
-    // Track all registered oracles
-    mapping(address => Oracle) private oracles;
-
-    // Model for responses from oracles
-    struct ResponseInfo {
-        address requester;                              // Account that requested status
-        bool isOpen;                                    // If open, oracle responses are accepted
-        mapping(uint8 => address[]) responses;          // Mapping key is the status code reported
-        // This lets us group responses and identify
-        // the response that majority of the oracles
-    }
-
-    // Track all oracle responses
-    // Key = hash(index, flight, timestamp)
-    mapping(bytes32 => ResponseInfo) private oracleResponses;
-
-    // Event fired each time an oracle submits a response
-    event FlightStatusInfo(address airline, string flight, uint256 timestamp, uint8 status);
-
-    event OracleReport(address airline, string flight, uint256 timestamp, uint8 status);
-
-    // Event fired when flight status request is submitted
-    // Oracles track this and if they have a matching index
-    // they fetch data and submit a response
-    event OracleRequest(uint8 index, address airline, string flight, uint256 timestamp);
 
 
     // Register an oracle with the contract
@@ -282,8 +264,7 @@ contract FlightSuretyApp {
         uint8 random = uint8(uint256(keccak256(abi.encodePacked(blockhash(block.number - nonce++), account))) % maxValue);
 
         if (nonce > 250) {
-            nonce = 0;
-            // Can only fetch blockhashes for last 256 blocks so we adapt
+            nonce = 0;      // Can only fetch blockhashes for last 256 blocks so we adapt
         }
         return random;
     }
@@ -295,32 +276,31 @@ contract FlightSuretyApp {
     function() external payable{
         flightSuretyData.fundForwarded.value(msg.value)(msg.sender);
     }
-    // endregion
-
 }
 
 contract FlightSuretyData {
-    function setOperatingStatus(bool mode) external;
-
     function isOperational() external view returns (bool);
 
-    function fundForwarded(address sender) external payable;
-
-    function registerFlight(string calldata name, uint256 timestamp, address airline) external;
-
-    function isFlightRegistered(string calldata name, uint256 timestamp, address airline) external view returns (bool);
+    function setOperatingStatus(bool mode) external;
 
     function isAirlineRegistered(address wallet) external view returns (bool);
 
     function isAirlineFunded(address wallet) external view returns (bool);
 
+    function registerAirline(string calldata name, address wallet) external;
+
     function getAirlineCount() external view returns (uint256);
 
-    function registerAirline(string calldata name, address wallet) external;
+    function isFlightRegistered(string calldata name, uint256 timestamp, address airline) external view returns (bool);
+
+    function registerFlight(string calldata name, uint256 timestamp, address airline) external;
 
     function buy(string calldata flight, uint256 timestamp, address airline, address insuree) external payable;
 
+    function creditInsurees(string calldata flight, uint256 timestamp, address airline) external;
+
     function pay(address payable insuree) external;
 
-    function creditInsurees(string calldata flight, uint256 timestamp, address airline) external;
+    function fundForwarded(address sender) external payable;
+
 }

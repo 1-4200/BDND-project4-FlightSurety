@@ -7,7 +7,6 @@ export default class Contract {
     constructor(network) {
         this.config = Config[network];
         this.web3 = new Web3(new Web3.providers.WebsocketProvider(this.config.url.replace('http', 'ws')));
-        // this.web3 = new Web3(new Web3.providers.HttpProvider(this.config.url));
         this.flightSuretyApp = new this.web3.eth.Contract(FlightSuretyApp.abi, this.config.appAddress, {
             gas: 4712388,
             gasPrice: 100000000000
@@ -15,7 +14,6 @@ export default class Contract {
         this.flightSuretyData = new this.web3.eth.Contract(FlightSuretyData.abi, this.config.dataAddress, 2);
         this.airlines = [];
         this.passengers = [];
-        // this.owner = '0x627306090abaB3A6e1400e9345bC60c78a8BEf57';
         this.owner = null;
     }
 
@@ -35,19 +33,6 @@ export default class Contract {
                 this.passengers.push(accts[counter++]);
             }
 
-            // await this.flightSuretyData.events.allEvents({
-            //     fromBlock: 0
-            // }, function (error, event) {
-            //     if (error) console.log(error);
-            //     console.log(event);
-            // });
-            //
-            // await this.flightSuretyApp.events.allEvents({
-            //     fromBlock: 0
-            // }, function (error, event) {
-            //     if (error) console.log(error);
-            //     console.log(event);
-            // });
 
             await this.flightSuretyApp.events.allEvents({ fromBlock: 'latest' })
                 .on('data', console.log)
@@ -59,19 +44,6 @@ export default class Contract {
                 .on('changed', console.log)
                 .on('error', console.log);
 
-            // this.flightSuretyApp.events.OracleRequest({
-            //     fromBlock: 0
-            // }, (error, event) => {
-            //     if (error) console.log(error);
-            //     console.log(event);
-            // });
-            //
-            // this.flightSuretyData.events.InsureeCredited({
-            //     fromBlock: 0
-            // }, async (error, event) => {
-            //     if (error) console.log(error);
-            //     console.log("%s Credit for %s, new value %d", event.returnValues.credit, event.returnValues.insuree, event.returnValues.total);
-            // });
         });
     }
 
@@ -84,6 +56,16 @@ export default class Contract {
         return await self.flightSuretyApp.methods
             .isOperational()
             .call({from: self.owner, gas: 4712388, gasPrice: 100000000000});
+    }
+    
+    async authorizeContract(address) {
+        let self = this;
+        let payload = {
+            address: address
+        };
+        return await self.flightSuretyData.methods
+            .authorizeCaller(payload.address)
+            .send({from: self.owner});
     }
 
     async getFlights() {
@@ -117,25 +99,38 @@ export default class Contract {
             .send({from: self.owner, value: value, gas: 4712388, gasPrice: 100000000000});
     }
 
-    async registerFlight(flight, timestamp) {
+    async registerAirline(flight, wallet) {
         let self = this;
         let payload = {
-            airline: self.airlines[0],
             name: flight,
-            timestamp: timestamp
+            airline: wallet
+        };
+        return await self.flightSuretyApp.methods
+            .registerAirline(payload.name, payload.airline)
+            .send({from: self.owner, gas: 4712388, gasPrice: 100000000000});
+    }
+
+    async registerFlight(flight, timestamp, wallet) {
+        let self = this;
+        let payload = {
+            name: flight,
+            timestamp: timestamp,
+            airline: wallet
         };
         return await self.flightSuretyApp.methods
             .registerFlight(payload.name, payload.timestamp, payload.airline)
             .send({from: self.owner, gas: 4712388, gasPrice: 100000000000});
     }
-
-    async authorizeContract(address) {
+    async checkFunds() {
         let self = this;
-        let payload = {
-            address: address
-        };
         return await self.flightSuretyData.methods
-            .authorizeCaller(payload.address)
-            .send({from: self.owner});
+            .checkFunds(self.owner)
+            .send({from: self.owner, gas: 4712388, gasPrice: 100000000000});
+    }
+    async withdraw() {
+        let self = this;
+        return await self.flightSuretyApp.methods
+            .getFunds()
+            .send({from: self.owner, gas: 4712388, gasPrice: 100000000000});
     }
 }

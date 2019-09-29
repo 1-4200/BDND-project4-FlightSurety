@@ -8,10 +8,14 @@ Udacity Blockchain Developer Nanodegree project4 (Flight Surety)
 - If flight is delayed due to airline fault, passengers are paid 1.5X the amount they paid for the insurance
 - Oracles provide flight status information
 
-## How to set up
+## Prerequisits
 1. Download node_modules by `npm install`
-2. Launch ganache by `ganache-cli -a 100 -l 9999999`
-3. Rewrite mnemonic in `truffle.js` according to the ganache-cli's mnemonic
+2. Set Ganache workspace https://www.trufflesuite.com/docs/ganache/reference/ganache-settings
+    * In section "Server", set the PORT NUMBER as 8545
+    * In section "Accounts & Keys", TOTAL ACCOUNTS TO GENERATE shoud be set as 100 accounts
+    * In section "Accounts & Keys", copy the mnemonic here
+    * In section "Chain", change the GAS LIMIT to 9999999
+3. Create `.secret` file and set the above mnemonic in the file, and locate it in the same folder as `truffle.js`
 4. Truffle migration by `truffle migrate`
 
 ### To run truffle tests:

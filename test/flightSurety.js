@@ -2,9 +2,6 @@ const Test = require('../config/testConfig.js');
 const truffleAssert = require('truffle-assertions');
 const BN = require('bn.js');
 
-
-// let INITIAL_FUND = web3.utils.toWei('10', "ether");
-// let MAX_INSURANCE_POLICY = web3.utils.toWei('1', "ether");
 let INITIAL_FUND = 0;
 let MAX_INSURANCE_POLICY = 0;
 
@@ -105,8 +102,6 @@ contract('Flight Surety Tests', async (accounts) => {
         const max_airlines = 2; // four minus two which are already registered
 
         for (let i = 0; i < max_airlines; ++i) {
-            // let count = BigNumber(await config.flightSuretyData.getAirlineCount.call());
-            // console.log("registered airlines: ", count);
             try {
                 await config.flightSuretyApp.sendTransaction({from: accounts[i + account_offset], value: INITIAL_FUND});
                 await config.flightSuretyApp.registerAirline("My Airline", accounts[i + account_offset], {from: config.firstAirline});
@@ -126,20 +121,14 @@ contract('Flight Surety Tests', async (accounts) => {
         for (let i = 0; i < max_airlines; ++i) {
             await config.flightSuretyApp.sendTransaction({from: accounts[i + account_offset], value: INITIAL_FUND});
             let count = new BN(await config.flightSuretyData.getAirlineCount.call());
-            // console.log("registered airlines: ", count);
             let votes_needed = Math.ceil(count / 2);
             for (let k = 0; k < votes_needed; ++k) {
                 try {
-                    // console.log("airline ", k+vote_offset, " registers airline ", i+account_offset);
                     await config.flightSuretyApp.registerAirline("My Airline", accounts[i + account_offset], {from: accounts[k + vote_offset]});
                 } catch (e) {
                     console.log(e)
                 }
                 let result = await config.flightSuretyData.isAirlineRegistered.call(accounts[i + account_offset]);
-                // console.log("vote ", k + 1);
-                // if(result) {
-                //     console.log("airline accepted, now", BigNumber(await config.flightSuretyData.getAirlineCount.call()));
-                // }
                 assert.equal(result, k === (votes_needed - 1), "multi-party consensus failed");
             }
         }
@@ -163,9 +152,6 @@ contract('Flight Surety Tests', async (accounts) => {
     });
 
     it("Register Flight", async () => {
-        //see previous tests
-        // let unfunded_airline = accounts[2];
-        // let new_airline = accounts[97];
 
         for (let i = 0; i< 10; ++i) {
             let airline = accounts[i];
@@ -251,7 +237,6 @@ contract('Flight Surety Tests', async (accounts) => {
         for (let a = 1; a < TEST_ORACLES_COUNT; a++) {
             await config.flightSuretyApp.registerOracle({from: accounts[a], value: fee});
             let result = await config.flightSuretyApp.getMyIndexes.call({from: accounts[a]});
-            // console.log(`Oracle Registered: ${result[0]}, ${result[1]}, ${result[2]}`);
         }
 
         tx = await config.flightSuretyApp.fetchFlightStatus(airline, name, timestamp);
@@ -277,13 +262,13 @@ contract('Flight Surety Tests', async (accounts) => {
                 let tx_data = await truffleAssert.createTransactionResult(config.flightSuretyData, tx.tx);
                 truffleAssert.eventEmitted(tx, 'OracleReport');
                 success_responses += 1;
-                console.log(success_responses);
+                console.log("Success Responses: %d",success_responses);
                 if (success_responses >= 3) {
                     truffleAssert.eventEmitted(tx, 'FlightStatusInfo');
                     truffleAssert.eventEmitted(tx_data, 'InsureeCredited', null, 'InsureeCredited was not emitted');
                     truffleAssert.eventEmitted(tx_data, 'InsureeCredited', (ev) => {
-                        console.log(web3.utils.fromWei(ev.credit.toString(), 'ether'));
-                        console.log(web3.utils.fromWei(expected_payout.toString(), 'ether'));
+                        console.log("Event Credit: %d", web3.utils.fromWei(ev.credit.toString(), 'ether'));
+                        console.log("Expected Payout: %d", web3.utils.fromWei(expected_payout.toString(), 'ether'));
                         return ev.insuree === customer && ev.credit.eq(expected_payout);
                     }, 'InsureeCredit emited wrong parameters');
                     return;
@@ -297,11 +282,11 @@ contract('Flight Surety Tests', async (accounts) => {
     it("Passenger can withdraw any funds owed to them as a result of receiving credit for insurance payout", async () => {
         let customer = accounts[55];
         let balance = web3.utils.fromWei(await web3.eth.getBalance(customer), 'ether');
-        
-        let funds = await config.flightSuretyData.checkFunds.call({from: customer});
+        let funds = web3.utils.fromWei(await config.flightSuretyData.checkFunds(customer), 'ether');
         let tx = await config.flightSuretyApp.getFunds({from: customer});
         let new_balance = web3.utils.fromWei(await web3.eth.getBalance(customer), 'ether');
 
+        console.log("Passenger fund is %d",funds);
         console.log("Balance is %d", balance);
         console.log("New Balance is %d", new_balance);
         console.log("Withdrew %d", new_balance - balance);
